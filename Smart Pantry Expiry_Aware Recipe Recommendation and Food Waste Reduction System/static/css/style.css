@@ -1,0 +1,206 @@
+/* Root variables */
+:root {
+  --primary: #2d6a4f;   /* Dark green */
+  --secondary: #52b788; /* Medium green */
+  --accent: #95d5b2;    /* Light green */
+  --warning: #f4a261;
+  --danger: #e76f51;
+  --light-bg: #f8fffe;
+  --card-shadow: 0 2px 15px rgba(0,0,0,0.08);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-bg);
+}
+
+.auth-body {
+    background-color: #e9f5f0 !important;
+}
+.auth-brand {
+    font-weight: 700;
+    color: var(--primary);
+}
+.auth-card {
+    border-radius: 12px;
+}
+
+/* App layout */
+#app-wrapper {
+    min-height: 100vh;
+}
+
+/* Sidebar styles */
+.sidebar { 
+    width: 250px; 
+    min-height: 100vh; 
+    background: var(--primary); 
+    color: white;
+    transition: all 0.3s ease;
+}
+.sidebar-brand { 
+    color: white; 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    padding: 1.5rem 1rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sidebar-brand:hover {
+    color: var(--accent);
+}
+.sidebar-nav {
+    flex: 1;
+    padding-top: 1rem;
+}
+.sidebar .nav-link { 
+    color: rgba(255,255,255,0.85); 
+    border-radius: 8px; 
+    margin: 4px 12px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.sidebar .nav-link:hover, .sidebar .nav-link.active { 
+    background: var(--secondary); 
+    color: white; 
+}
+.sidebar .nav-link i {
+    font-size: 1.2rem;
+}
+
+/* Main content */
+.main-content { 
+    flex: 1; 
+    background: var(--light-bg); 
+    min-height: 100vh; 
+    padding: 2rem;
+    overflow-x: hidden;
+}
+
+/* Navbar top */
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Cards */
+.stat-card { 
+    border: none; 
+    border-radius: 12px; 
+    box-shadow: var(--card-shadow); 
+    transition: transform 0.2s; 
+    height: 100%;
+}
+.stat-card:hover { 
+    transform: translateY(-3px); 
+}
+.stat-card .card-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+.recipe-card { 
+    border: none; 
+    border-radius: 12px; 
+    box-shadow: var(--card-shadow); 
+    transition: transform 0.2s; 
+    height: 100%;
+    overflow: hidden;
+}
+.recipe-card:hover { 
+    transform: translateY(-3px); 
+}
+
+/* Status badges */
+.badge-fresh { background-color: #2d6a4f; color: white; }
+.badge-use-soon { background-color: #52b788; color: #000; }
+.badge-expiring { background-color: #f4a261; color: #000; }
+.badge-today { background-color: #e76f51; color: white; animation: pulse 2s infinite; }
+.badge-expired { background-color: #d62828; color: white; }
+
+/* Match percentage bar */
+.match-bar-container {
+    background: #e9ecef;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+.match-bar { height: 100%; border-radius: 3px; background: linear-gradient(to right, #52b788, #2d6a4f); }
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+  #app-wrapper { flex-direction: column !important; }
+  .sidebar { width: 100%; min-height: auto; padding-bottom: 1rem; }
+  .sidebar-nav { display: flex; flex-wrap: wrap; justify-content: center; }
+  .sidebar .nav-link { margin: 2px; padding: 0.5rem; font-size: 0.9rem; }
+  .sidebar .nav-link span { display: none; } /* Hide text on mobile, icons only */
+  .main-content { padding: 1rem; }
+}
+
+/* Table styles */
+.table-responsive {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    padding: 1rem;
+}
+.table thead th {
+    border-bottom: 2px solid var(--secondary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Chart containers */
+.chart-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* AI Assistant Chat Styles */
+.chat-msg {
+    animation: fadeIn 0.25s ease-in-out;
+}
+.chat-msg .msg-bubble {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.quick-prompt-btn {
+    font-size: 0.82rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.quick-prompt-btn:hover {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+

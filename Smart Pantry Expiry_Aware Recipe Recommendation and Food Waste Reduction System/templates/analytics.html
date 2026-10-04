@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Analytics - Smart Pantry{% endblock %}
+{% block page_title %}Analytics & Impact{% endblock %}
+
+{% block content %}
+<!-- Stats Summary Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md col-6">
+        <div class="card stat-card bg-white border border-primary border-opacity-25 h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-bag-plus-fill text-primary fs-3 mb-2 d-block"></i>
+                <h2 class="text-primary fw-bold mb-1">{{ analytics.totals.total_added }}</h2>
+                <h6 class="text-muted mb-0 small text-uppercase fw-bold">Items Added</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-white border border-success border-opacity-25 h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-check-circle-fill text-success fs-3 mb-2 d-block"></i>
+                <h2 class="text-success fw-bold mb-1">{{ analytics.totals.consumed }}</h2>
+                <h6 class="text-muted mb-0 small text-uppercase fw-bold">Consumed</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-white border border-secondary border-opacity-25 h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-trash-fill text-secondary fs-3 mb-2 d-block"></i>
+                <h2 class="text-secondary fw-bold mb-1">{{ analytics.totals.wasted }}</h2>
+                <h6 class="text-muted mb-0 small text-uppercase fw-bold">Wasted</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-white border border-danger border-opacity-25 h-100 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-clock-fill text-danger fs-3 mb-2 d-block"></i>
+                <h2 class="text-danger fw-bold mb-1">{{ analytics.totals.expired_count }}</h2>
+                <h6 class="text-muted mb-0 small text-uppercase fw-bold">Expired</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-12">
+        <div class="card stat-card bg-success text-white h-100 shadow-sm">
+            <div class="card-body d-flex align-items-center justify-content-between p-4">
+                <div>
+                    <h6 class="text-white-50 mb-1 small text-uppercase fw-bold">Items Saved</h6>
+                    <h2 class="fw-bold mb-0">{{ analytics.totals.saved }}</h2>
+                    <small class="text-white-50">Used before expiry</small>
+                </div>
+                <i class="bi bi-recycle fs-1 opacity-75"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">🍽️ Food Fate Breakdown</h5>
+                <div style="position:relative;min-height:250px;">
+                    <canvas id="fateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">📦 Waste by Category</h5>
+                <div style="position:relative;min-height:250px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">❓ Waste by Reason</h5>
+                <div style="position:relative;min-height:250px;">
+                    <canvas id="reasonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">📈 Monthly Waste Trend</h5>
+                <div style="position:relative;min-height:250px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Environmental Impact -->
+<div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">
+    <div class="card-body p-4 p-md-5">
+        <h4 class="fw-bold mb-4 text-center text-success">
+            <i class="bi bi-globe-americas me-2"></i>Your Environmental Impact
+        </h4>
+        <div class="row g-4 text-center">
+            <div class="col-md-4">
+                <div class="p-3">
+                    <i class="bi bi-recycle fs-1 text-success mb-3 d-block"></i>
+                    <h3 class="fw-bold text-dark">{{ environmental.items_saved }}</h3>
+                    <p class="text-muted">Items consumed before expiry</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3">
+                    <i class="bi bi-trash2 fs-1 text-secondary mb-3 d-block"></i>
+                    <h3 class="fw-bold text-dark">{{ environmental.items_wasted }}</h3>
+                    <p class="text-muted">Items tracked as wasted</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3">
+                    <i class="bi bi-shield-check fs-1 text-primary mb-3 d-block"></i>
+                    <h3 class="fw-bold text-dark">{{ analytics.totals.total_added - analytics.totals.wasted }}</h3>
+                    <p class="text-muted">Items still in circulation</p>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <small class="text-muted fst-italic">
+                <i class="bi bi-info-circle me-1"></i>
+                * All figures are estimates based on logged data only. {{ environmental.note }}
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const analyticsData = {
+        consumed: {{ analytics.totals.consumed | tojson }},
+        wasted: {{ analytics.totals.wasted | tojson }},
+        expired: {{ analytics.totals.expired_count | tojson }},
+        category: {{ analytics.waste_by_category | tojson | safe }},
+        reason: {{ analytics.waste_by_reason | tojson | safe }},
+        trend: {{ analytics.monthly_trend | tojson | safe }}
+    };
+</script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

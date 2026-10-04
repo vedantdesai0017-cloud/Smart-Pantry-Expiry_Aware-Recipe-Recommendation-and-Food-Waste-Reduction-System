@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Add Item - Smart Pantry{% endblock %}
+{% block page_title %}Add New Item{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 mt-2">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h4 class="fw-bold mb-0">Add Food to Pantry</h4>
+                <p class="text-muted small">Fill in the details to keep track of your food.</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('pantry.add') }}" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-bold">Food Name</label>
+                        <input type="text" class="form-control bg-light" id="name" name="name" required placeholder="e.g. Milk, Apples, Bread">
+                        <div class="invalid-feedback">Please enter a food name.</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label fw-bold">Category</label>
+                            <select class="form-select bg-light" id="category" name="category" required>
+                                <option value="" disabled selected>Select category...</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a category.</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="quantity" class="form-label fw-bold">Quantity</label>
+                            <input type="number" class="form-control bg-light" id="quantity" name="quantity" min="0.1" step="0.1" required value="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="unit" class="form-label fw-bold">Unit</label>
+                            <select class="form-select bg-light" id="unit" name="unit" required>
+                                {% for u in units %}
+                                <option value="{{ u }}">{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="purchase_date" class="form-label fw-bold">Purchase Date</label>
+                            <input type="date" class="form-control bg-light" id="purchase_date" name="purchase_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="expiry_date" class="form-label fw-bold">Expiry Date</label>
+                            <input type="date" class="form-control bg-light border-warning" id="expiry_date" name="expiry_date" required>
+                            <div class="form-text"><i class="bi bi-info-circle"></i> Crucial for alerts & recipes!</div>
+                        </div>
+                    </div>
+                    
+                    <hr class="text-muted mb-4">
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('pantry.list_items') }}" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm"><i class="bi bi-plus-circle me-1"></i> Add to Pantry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+
+        // Set default dates
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+
+        const formatDate = (date) => {
+            return date.toISOString().split('T')[0];
+        }
+
+        const purchaseInput = document.getElementById('purchase_date');
+        const expiryInput = document.getElementById('expiry_date');
+        
+        purchaseInput.value = formatDate(today);
+        
+        // Max purchase date is today
+        purchaseInput.max = formatDate(today);
+        
+        // Expiry defaults to 7 days, min is today
+        expiryInput.value = formatDate(nextWeek);
+        expiryInput.min = formatDate(today);
+    });
+</script>
+{% endblock %}

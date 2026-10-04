@@ -1,0 +1,13 @@
+{% extends "auth_base.html" %}
+{% block title %}404 Not Found - Smart Pantry{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 fw-bold text-success opacity-50">404</h1>
+    <h3 class="mb-4">Page Not Found</h3>
+    <p class="text-muted mb-4">The page you are looking for doesn't exist or has been moved.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-success rounded-pill px-4 shadow-sm">
+        <i class="bi bi-house-door me-2"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}

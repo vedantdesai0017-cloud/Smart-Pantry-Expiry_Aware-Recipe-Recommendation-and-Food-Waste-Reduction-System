@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Expiring Soon - Smart Pantry{% endblock %}
+{% block page_title %}Expiring Soon Alerts{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="fw-bold mb-1">⚠️ Attention Required</h4>
+    <p class="text-muted">Use these ingredients before they go to waste!</p>
+</div>
+
+{% if not expired and not today and not high_priority and not medium_priority %}
+<div class="card border-0 shadow-sm rounded-4 text-center py-5">
+    <div class="card-body">
+        <i class="bi bi-shield-check fs-1 text-success mb-3 d-block opacity-75"></i>
+        <h4 class="fw-bold">All Good! 🎉</h4>
+        <p class="text-muted mb-4">You have no items expiring in the next 7 days. Great pantry management!</p>
+        <a href="{{ url_for('pantry.list_items') }}" class="btn btn-outline-success rounded-pill">
+            <i class="bi bi-box-seam me-1"></i>View Full Pantry
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- ALREADY EXPIRED -->
+{% if expired %}
+<div class="mb-5">
+    <h5 class="text-danger fw-bold mb-3 border-bottom pb-2 border-danger">
+        <i class="bi bi-x-octagon-fill me-2"></i>EXPIRED — Please discard or check these items
+    </h5>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for item in expired %}
+        <div class="col">
+            <div class="card border-danger border-2 h-100 shadow-sm rounded-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0 text-dark">{{ item.name }}</h5>
+                        <span class="badge bg-danger rounded-pill">Expired {{ item.days_remaining|abs }} day{{ 's' if item.days_remaining|abs != 1 }} ago</span>
+                    </div>
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-box me-1"></i>{{ item.quantity }} {{ item.unit }} · {{ item.category }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar me-1"></i>Expired: {{ item.expiry_date.strftime('%d %b %Y') }}
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('recipes.list_recipes') }}?q={{ item.name }}"
+                           class="btn btn-sm btn-outline-danger w-100 rounded-pill">
+                            <i class="bi bi-egg-fried me-1"></i>Find Recipes
+                        </a>
+                        <form method="POST" action="{{ url_for('pantry.delete', id=item.id) }}" class="w-100">
+                            <button type="submit" class="btn btn-sm btn-danger w-100 rounded-pill"
+                                    onclick="return confirm('Discard {{ item.name }}?')">
+                                <i class="bi bi-trash me-1"></i>Discard
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- EXPIRES TODAY -->
+{% if today %}
+<div class="mb-5">
+    <h5 class="text-danger fw-bold mb-3 border-bottom pb-2 border-danger">
+        <i class="bi bi-alarm-fill me-2"></i>URGENT — Expires TODAY
+    </h5>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for item in today %}
+        <div class="col">
+            <div class="card border-danger border-2 h-100 shadow-sm rounded-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0 text-dark">{{ item.name }}</h5>
+                        <span class="badge bg-danger rounded-pill">TODAY!</span>
+                    </div>
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-box me-1"></i>{{ item.quantity }} {{ item.unit }} · {{ item.category }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar me-1"></i>{{ item.expiry_date.strftime('%d %b %Y') }}
+                    </p>
+                    <a href="{{ url_for('recipes.list_recipes') }}?q={{ item.name }}"
+                       class="btn btn-sm btn-danger w-100 rounded-pill">
+                        <i class="bi bi-egg-fried me-1"></i>Find Recipes Now
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- HIGH PRIORITY: 1-3 days -->
+{% if high_priority %}
+<div class="mb-5">
+    <h5 class="text-warning fw-bold mb-3 border-bottom pb-2 border-warning">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>HIGH PRIORITY — Expires in 1–3 Days
+    </h5>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for item in high_priority %}
+        <div class="col">
+            <div class="card border-warning border-2 h-100 shadow-sm rounded-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0 text-dark">{{ item.name }}</h5>
+                        <span class="badge bg-warning text-dark rounded-pill">
+                            In {{ item.days_remaining }} day{{ 's' if item.days_remaining != 1 }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-box me-1"></i>{{ item.quantity }} {{ item.unit }} · {{ item.category }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar me-1"></i>{{ item.expiry_date.strftime('%d %b %Y') }}
+                    </p>
+                    <a href="{{ url_for('recipes.list_recipes') }}?q={{ item.name }}"
+                       class="btn btn-sm btn-warning text-dark w-100 rounded-pill fw-bold">
+                        <i class="bi bi-egg-fried me-1"></i>Find Recipes
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- MEDIUM PRIORITY: 4-7 days -->
+{% if medium_priority %}
+<div class="mb-4">
+    <h5 class="text-info fw-bold mb-3 border-bottom pb-2 border-info">
+        <i class="bi bi-info-circle-fill me-2"></i>MEDIUM PRIORITY — Expires in 4–7 Days
+    </h5>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for item in medium_priority %}
+        <div class="col">
+            <div class="card border-info h-100 shadow-sm rounded-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0 text-dark">{{ item.name }}</h5>
+                        <span class="badge bg-info text-dark rounded-pill">
+                            In {{ item.days_remaining }} days
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-box me-1"></i>{{ item.quantity }} {{ item.unit }} · {{ item.category }}
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar me-1"></i>{{ item.expiry_date.strftime('%d %b %Y') }}
+                    </p>
+                    <a href="{{ url_for('recipes.list_recipes') }}?q={{ item.name }}"
+                       class="btn btn-sm btn-outline-info text-dark w-100 rounded-pill">
+                        <i class="bi bi-search me-1"></i>Find Recipes
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

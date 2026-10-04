@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Recipes - Smart Pantry{% endblock %}
+{% block page_title %}Recipe Recommendations{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="fw-bold mb-1">🍳 Smart Recipes</h4>
+    <p class="text-muted">Recipes scored based on your pantry — items expiring soon get priority!</p>
+</div>
+
+<div class="alert alert-success border-0 shadow-sm rounded-4 d-flex justify-content-between align-items-center mb-4 p-3" style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9);">
+    <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-success text-white p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            <i class="bi bi-robot fs-5"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-0 text-dark">Looking for custom ideas or ingredient substitutions?</h6>
+            <small class="text-secondary">Smart Pantry AI can generate recipes and suggest alternatives based on your pantry.</small>
+        </div>
+    </div>
+    <a href="{{ url_for('ai.assistant') }}" class="btn btn-success btn-sm rounded-pill px-3 py-2 flex-shrink-0 fw-semibold">
+        Ask AI <i class="bi bi-arrow-right"></i>
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('recipes.list_recipes') }}" class="row g-3" id="recipe-filter-form">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control bg-light border-start-0" name="q"
+                           value="{{ search_query or '' }}" placeholder="Search recipes...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select bg-light" name="diet" onchange="this.form.submit()">
+                    <option value="">Dietary Preference (All)</option>
+                    <option value="Vegetarian" {% if filter_dietary == 'Vegetarian' %}selected{% endif %}>🥗 Vegetarian</option>
+                    <option value="Non-Vegetarian" {% if filter_dietary == 'Non-Vegetarian' %}selected{% endif %}>🍗 Non-Vegetarian</option>
+                    <option value="Vegan" {% if filter_dietary == 'Vegan' %}selected{% endif %}>🌿 Vegan</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select bg-light" name="difficulty" onchange="this.form.submit()">
+                    <option value="">Difficulty (All)</option>
+                    <option value="Easy" {% if filter_difficulty == 'Easy' %}selected{% endif %}>⭐ Easy</option>
+                    <option value="Medium" {% if filter_difficulty == 'Medium' %}selected{% endif %}>⭐⭐ Medium</option>
+                    <option value="Hard" {% if filter_difficulty == 'Hard' %}selected{% endif %}>⭐⭐⭐ Hard</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-success w-100" title="Search">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Recipe Grid -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% if recipes %}
+        {% for rec in recipes %}
+        <div class="col">
+            <div class="card recipe-card border-0 h-100 d-flex flex-column shadow-sm">
+                <!-- Header -->
+                <div class="card-header border-0 pb-0 bg-transparent pt-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            {% if rec.recipe.dietary_type == 'Vegetarian' %}
+                                <span class="badge bg-success bg-opacity-25 text-success rounded-pill mb-2">🥗 Vegetarian</span>
+                            {% elif rec.recipe.dietary_type == 'Non-Vegetarian' %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill mb-2">🍗 Non-Veg</span>
+                            {% elif rec.recipe.dietary_type == 'Vegan' %}
+                                <span class="badge bg-success rounded-pill mb-2">🌿 Vegan</span>
+                            {% endif %}
+                            <h5 class="fw-bold mb-1 text-dark">{{ rec.recipe.name }}</h5>
+                        </div>
+                        <span class="badge rounded-pill px-3
+                            {% set score = rec.match_info.final_score %}
+                            {% if score >= 60 %}bg-success{% elif score >= 30 %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ rec.match_info.final_score }}/100
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body d-flex flex-column py-2">
+                    <p class="text-muted small mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        {{ rec.recipe.description }}
+                    </p>
+
+                    <div class="d-flex gap-3 text-muted small mb-3 fw-medium">
+                        <span><i class="bi bi-clock"></i> {{ rec.recipe.cooking_time }} mins</span>
+                        <span><i class="bi bi-bar-chart"></i> {{ rec.recipe.difficulty }}</span>
+                    </div>
+
+                    <!-- Ingredient Match Bar -->
+                    <div class="mb-3 mt-auto">
+                        {% set mp = (rec.match_info.match_pct * 100)|round|int %}
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small fw-bold">
+                                Pantry Match: {{ rec.match_info.match_count }}/{{ rec.match_info.total }}
+                            </span>
+                            <span class="small fw-bold
+                                {% if mp >= 75 %}text-success{% elif mp >= 50 %}text-warning{% else %}text-secondary{% endif %}">
+                                {{ mp }}%
+                            </span>
+                        </div>
+                        <div class="match-bar">
+                            <div class="match-fill {% if mp < 50 %}bg-secondary{% elif mp < 75 %}bg-warning{% else %}bg-success{% endif %}"
+                                 style="width:{{ mp }}%"></div>
+                        </div>
+                    </div>
+
+                    {% if rec.match_info.expiring_matches %}
+                    <div class="mb-3 p-2 bg-warning bg-opacity-10 rounded-3">
+                        <span class="small text-warning-emphasis fw-bold d-block mb-1">
+                            <i class="bi bi-exclamation-circle"></i> Uses expiring items:
+                        </span>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for ing in rec.match_info.expiring_matches[:3] %}
+                            <span class="badge border border-warning text-dark">{{ ing.name }}</span>
+                            {% endfor %}
+                            {% if rec.match_info.expiring_matches|length > 3 %}
+                            <span class="badge border border-warning text-muted">+{{ rec.match_info.expiring_matches|length - 3 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <a href="{{ url_for('recipes.detail', id=rec.recipe.id) }}"
+                       class="btn btn-success w-100 rounded-pill shadow-sm mt-auto">
+                        <i class="bi bi-eye me-1"></i>View Recipe
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-search fs-1 text-muted opacity-50 mb-3 d-block"></i>
+                <h5 class="text-muted">No recipes found matching your criteria.</h5>
+                <p>Try adjusting your filters or search terms.</p>
+                <a href="{{ url_for('recipes.list_recipes') }}" class="btn btn-outline-secondary mt-2 rounded-pill">
+                    <i class="bi bi-x-circle me-1"></i>Clear Filters
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}My Pantry - Smart Pantry{% endblock %}
+{% block page_title %}My Pantry{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Your Food Inventory</h4>
+        <span class="text-muted">{{ items|length }} item(s) shown</span>
+    </div>
+    <a href="{{ url_for('pantry.add') }}" class="btn btn-success rounded-pill shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> Add New Item
+    </a>
+</div>
+
+<!-- Filters and Search -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('pantry.list_items') }}" class="row g-3 align-items-end" id="filter-form">
+            <div class="col-md-4">
+                <label for="search" class="form-label text-muted small mb-1">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control bg-light border-start-0" id="search" name="q"
+                           value="{{ search_query or '' }}" placeholder="Search food items...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label text-muted small mb-1">Category</label>
+                <select class="form-select bg-light" id="category" name="category" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if filter_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label text-muted small mb-1">Status</label>
+                <select class="form-select bg-light" id="status" name="status" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="Fresh" {% if filter_status == 'Fresh' %}selected{% endif %}>🟢 Fresh</option>
+                    <option value="Use Soon" {% if filter_status == 'Use Soon' %}selected{% endif %}>🔵 Use Soon</option>
+                    <option value="Expiring Soon" {% if filter_status == 'Expiring Soon' %}selected{% endif %}>🟡 Expiring Soon</option>
+                    <option value="Expires Today" {% if filter_status == 'Expires Today' %}selected{% endif %}>🟠 Expires Today</option>
+                    <option value="Expired" {% if filter_status == 'Expired' %}selected{% endif %}>🔴 Expired</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="sort" class="form-label text-muted small mb-1">Sort By</label>
+                <select class="form-select bg-light" id="sort" name="sort" onchange="this.form.submit()">
+                    <option value="expiry_date" {% if sort_by == 'expiry_date' %}selected{% endif %}>Expiry Date</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+                    <option value="category" {% if sort_by == 'category' %}selected{% endif %}>Category</option>
+                </select>
+            </div>
+            <button type="submit" class="d-none"></button>
+        </form>
+    </div>
+</div>
+
+<!-- Pantry Table -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="pantry-table">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Food Item</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Purchase Date</th>
+                        <th>Expiry Date</th>
+                        <th>Remaining</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if items %}
+                        {% for item in items %}
+                        <tr class="{% if item.days_remaining <= 0 %}table-danger{% elif item.days_remaining <= 3 %}table-warning{% endif %}">
+                            <td class="ps-4 fw-bold">
+                                <i class="bi bi-basket2 me-2 text-muted"></i>{{ item.name }}
+                            </td>
+                            <td><span class="badge bg-secondary rounded-pill fw-normal">{{ item.category }}</span></td>
+                            <td>{{ item.quantity|int if item.quantity == item.quantity|int else item.quantity }} {{ item.unit }}</td>
+                            <td>{{ item.purchase_date.strftime('%d %b %Y') if item.purchase_date else '-' }}</td>
+                            <td>{{ item.expiry_date.strftime('%d %b %Y') if item.expiry_date else '-' }}</td>
+                            <td>
+                                {% if item.days_remaining < 0 %}
+                                <span class="text-danger fw-bold">{{ item.days_remaining|abs }} days ago</span>
+                                {% elif item.days_remaining == 0 %}
+                                <span class="text-danger fw-bold">Today!</span>
+                                {% else %}
+                                <span class="{% if item.days_remaining <= 3 %}text-warning fw-bold{% elif item.days_remaining <= 7 %}text-info{% else %}text-muted{% endif %}">
+                                    {{ item.days_remaining }} days
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set cs = item.computed_status %}
+                                {% if cs == 'Expired' %}
+                                <span class="badge bg-danger rounded-pill px-3">
+                                    <i class="bi bi-x-circle me-1"></i>Expired
+                                </span>
+                                {% elif cs == 'Expires Today' %}
+                                <span class="badge bg-danger rounded-pill px-3">
+                                    <i class="bi bi-alarm me-1"></i>Expires Today
+                                </span>
+                                {% elif cs == 'Expiring Soon' %}
+                                <span class="badge bg-warning text-dark rounded-pill px-3">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Expiring Soon
+                                </span>
+                                {% elif cs == 'Use Soon' %}
+                                <span class="badge bg-info text-dark rounded-pill px-3">
+                                    <i class="bi bi-clock me-1"></i>Use Soon
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success rounded-pill px-3">
+                                    <i class="bi bi-check-circle me-1"></i>Fresh
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{{ url_for('pantry.edit', id=item.id) }}"
+                                       class="btn btn-sm btn-light border" title="Edit">
+                                        <i class="bi bi-pencil text-primary"></i>
+                                    </a>
+
+                                    <!-- Mark as Used -->
+                                    <form method="POST" action="{{ url_for('pantry.used', id=item.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-light border" title="Mark as Used"
+                                                onclick="return confirm('Mark {{ item.name }} as used?')">
+                                            <i class="bi bi-check2-circle text-success"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Mark as Wasted -->
+                                    <a href="{{ url_for('pantry.wasted', id=item.id) }}"
+                                       class="btn btn-sm btn-light border" title="Mark as Wasted">
+                                        <i class="bi bi-trash2 text-warning"></i>
+                                    </a>
+
+                                    <!-- Delete -->
+                                    <form method="POST" action="{{ url_for('pantry.delete', id=item.id) }}"
+                                          class="d-inline" id="delete-form-{{ item.id }}">
+                                        <button type="button" class="btn btn-sm btn-light border" title="Delete"
+                                                onclick="confirmDelete('{{ item.id }}', '{{ item.name }}')">
+                                            <i class="bi bi-trash text-danger"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-box2-heart fs-1 mb-3 d-block opacity-50"></i>
+                                <h5>Your pantry is empty</h5>
+                                <p>Try adjusting filters or add some new items.</p>
+                                <a href="{{ url_for('pantry.add') }}" class="btn btn-success mt-2 rounded-pill">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Item
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title fw-bold text-danger">
+            <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body py-4">
+        Are you sure you want to remove <strong id="deleteItemName"></strong> from your pantry?
+        This action cannot be undone.
+      </div>
+      <div class="modal-footer border-top-0">
+        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="confirmDeleteBtn">
+            <i class="bi bi-trash me-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentDeleteId = null;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    function confirmDelete(id, name) {
+        currentDeleteId = id;
+        document.getElementById('deleteItemName').textContent = name;
+        deleteModal.show();
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+        if (currentDeleteId) {
+            document.getElementById('delete-form-' + currentDeleteId).submit();
+        }
+    });
+
+    // Auto submit search with debounce
+    let timeout = null;
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                document.getElementById('filter-form').submit();
+            }, 500);
+        });
+    }
+</script>
+{% endblock %}

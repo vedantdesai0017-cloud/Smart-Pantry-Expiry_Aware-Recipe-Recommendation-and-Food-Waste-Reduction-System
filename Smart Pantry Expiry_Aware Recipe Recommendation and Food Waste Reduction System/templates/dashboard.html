@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Smart Pantry{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-dark">Good {{ greeting }}, {{ user_name }}! 👋</h2>
+    <p class="text-muted">Here's what's happening in your pantry today.</p>
+</div>
+
+<!-- Alert notifications -->
+{% if notifications and notifications.expiring_count > 0 %}
+<div class="alert alert-warning alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>⚠️ {{ notifications.expiring_count }} item(s)</strong> are expiring within 3 days!
+    <a href="{{ url_for('expiring.index') }}" class="alert-link ms-2">View Now →</a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+{% if notifications and notifications.expired_count > 0 %}
+<div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+    <i class="bi bi-x-circle-fill me-2"></i>
+    <strong>🔴 {{ notifications.expired_count }} item(s)</strong> have already expired and need attention.
+    <a href="{{ url_for('pantry.list_items') }}" class="alert-link ms-2">View Pantry →</a>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- AI Feature Banner -->
+<div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #1b4332, #2d6a4f); color: white;">
+    <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-warning text-dark rounded-pill fw-bold px-2 py-1"><i class="bi bi-stars"></i> AI POWERED</span>
+                <h5 class="fw-bold mb-0">🤖 Ask Smart Pantry AI</h5>
+            </div>
+            <p class="mb-0 text-white-50 small">Get natural language recipe suggestions and ingredient substitutions tailored to your expiring pantry items.</p>
+        </div>
+        <a href="{{ url_for('ai.assistant') }}" class="btn btn-light text-success fw-bold rounded-pill px-4 py-2 flex-shrink-0 shadow-sm">
+            <i class="bi bi-chat-dots-fill me-1"></i> Open AI Assistant
+        </a>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('pantry.add') }}" class="btn btn-success w-100 py-2 shadow-sm rounded-pill">
+            <i class="bi bi-plus-circle me-1"></i> Add Food
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('recipes.list_recipes') }}" class="btn btn-outline-success w-100 py-2 shadow-sm rounded-pill">
+            <i class="bi bi-egg-fried me-1"></i> Find Recipes
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('expiring.index') }}" class="btn btn-outline-warning w-100 py-2 shadow-sm rounded-pill text-dark">
+            <i class="bi bi-clock me-1"></i> Expiring Soon
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ url_for('waste.list_waste') }}" class="btn btn-outline-secondary w-100 py-2 shadow-sm rounded-pill">
+            <i class="bi bi-recycle me-1"></i> Track Waste
+        </a>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md col-6">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-bag-fill fs-2 opacity-75"></i>
+                <div>
+                    <h6 class="card-title text-white-50 mb-0">Total Items</h6>
+                    <h2 class="mb-0">{{ total_items }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-check-circle-fill fs-2 opacity-75"></i>
+                <div>
+                    <h6 class="card-title text-white-50 mb-0">Fresh</h6>
+                    <h2 class="mb-0">{{ fresh_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-warning text-dark">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-clock-fill fs-2 opacity-75"></i>
+                <div>
+                    <h6 class="card-title opacity-75 mb-0">Expiring</h6>
+                    <h2 class="mb-0">{{ expiring_soon_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-danger text-white">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-x-circle-fill fs-2 opacity-75"></i>
+                <div>
+                    <h6 class="card-title text-white-50 mb-0">Expired</h6>
+                    <h2 class="mb-0">{{ expired_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-6">
+        <div class="card stat-card bg-secondary text-white">
+            <div class="card-body d-flex align-items-center gap-3">
+                <i class="bi bi-recycle fs-2 opacity-75"></i>
+                <div>
+                    <h6 class="card-title text-white-50 mb-0">Wasted</h6>
+                    <h2 class="mb-0">{{ wasted_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+        <!-- Expiring Soon List -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-4 pb-0">
+                <h5 class="fw-bold mb-0">⚠️ Expiring Soon</h5>
+                <a href="{{ url_for('expiring.index') }}" class="btn btn-sm btn-outline-warning rounded-pill">View All</a>
+            </div>
+            <div class="card-body">
+                {% if top_expiring %}
+                <ul class="list-group list-group-flush">
+                    {% for item in top_expiring %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-warning bg-opacity-15 p-2">
+                                <i class="bi bi-basket2 text-warning fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ item.name }}</h6>
+                                <small class="text-muted">{{ item.quantity }} {{ item.unit }} · {{ item.category }}</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            {% if item.days_remaining < 0 %}
+                            <span class="badge bg-danger rounded-pill px-3 py-2">
+                                <i class="bi bi-x-circle me-1"></i>Expired
+                            </span>
+                            {% elif item.days_remaining == 0 %}
+                            <span class="badge bg-danger rounded-pill px-3 py-2">
+                                <i class="bi bi-alarm me-1"></i>Expires TODAY
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                <i class="bi bi-clock me-1"></i>In {{ item.days_remaining }} day{{ 's' if item.days_remaining != 1 }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-emoji-smile fs-2 text-success mb-2 d-block"></i>
+                    <p class="mb-0 fw-semibold">Great job! No items expiring within 7 days.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recommended Recipes -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-4 pb-0">
+                <h5 class="fw-bold mb-0">🍳 Recommended Recipes</h5>
+                <a href="{{ url_for('recipes.list_recipes') }}" class="btn btn-sm btn-outline-success rounded-pill">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recommended_recipes %}
+                <div class="row row-cols-1 row-cols-md-2 g-3">
+                    {% for rec in recommended_recipes[:4] %}
+                    <div class="col">
+                        <div class="card recipe-card h-100 border-0 bg-light">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h6 class="fw-bold mb-0 text-truncate me-2">
+                                        {% if rec.recipe.dietary_type == 'Vegetarian' %}🥗{% elif rec.recipe.dietary_type == 'Vegan' %}🌿{% else %}🍗{% endif %}
+                                        {{ rec.recipe.name }}
+                                    </h6>
+                                    {% set mp = (rec.match_info.match_pct * 100)|round|int %}
+                                    <span class="badge {% if mp >= 75 %}bg-success{% elif mp >= 50 %}bg-warning text-dark{% else %}bg-secondary{% endif %} rounded-pill">
+                                        {{ mp }}%
+                                    </span>
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    <i class="bi bi-clock"></i> {{ rec.recipe.cooking_time }} min &nbsp;·&nbsp;
+                                    <i class="bi bi-bar-chart"></i> {{ rec.recipe.difficulty }}
+                                </div>
+                                <div class="small mb-2 text-muted">
+                                    {{ rec.match_info.match_count }}/{{ rec.match_info.total }} ingredients available
+                                </div>
+                                {% if rec.match_info.expiring_matches %}
+                                <div class="mb-2">
+                                    <small class="d-block text-warning fw-bold mb-1">
+                                        <i class="bi bi-exclamation-circle"></i> Uses expiring:
+                                    </small>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for ing in rec.match_info.expiring_matches[:2] %}
+                                        <span class="badge bg-warning text-dark">{{ ing.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <a href="{{ url_for('recipes.detail', id=rec.recipe.id) }}"
+                                   class="btn btn-sm btn-success w-100 rounded-pill mt-1">View Recipe</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-basket fs-2 mb-2 d-block text-muted opacity-50"></i>
+                    <p class="mb-1">No matching recipes yet.</p>
+                    <small>Add pantry items to get personalized recommendations.</small>
+                    <div class="mt-3">
+                        <a href="{{ url_for('pantry.add') }}" class="btn btn-sm btn-success rounded-pill">
+                            <i class="bi bi-plus-circle me-1"></i>Add Food Items
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Waste Chart -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">♻️ Food Waste Overview</h5>
+            </div>
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                {% if analytics and (analytics.totals.consumed > 0 or analytics.totals.wasted > 0) %}
+                <div class="w-100" style="max-width: 280px;">
+                    <canvas id="wasteChart"></canvas>
+                </div>
+                <div id="waste-data"
+                     data-consumed="{{ analytics.totals.consumed }}"
+                     data-wasted="{{ analytics.totals.wasted }}"
+                     data-expired="{{ analytics.totals.expired_count }}"
+                     style="display:none;"></div>
+                <div class="mt-3 small text-center text-muted">
+                    <span class="me-2"><span class="badge bg-success">&nbsp;</span> Consumed</span>
+                    <span class="me-2"><span class="badge bg-warning">&nbsp;</span> Wasted</span>
+                    <span><span class="badge bg-danger">&nbsp;</span> Expired</span>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-pie-chart fs-1 text-secondary mb-3 d-block opacity-50"></i>
+                    <p class="mb-0">No data yet.</p>
+                    <small>Start tracking food use to see insights.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">🌍 Environmental Impact</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle bg-success bg-opacity-15 p-3">
+                        <i class="bi bi-recycle text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold fs-4 text-success">{{ total_items - wasted_count }}</div>
+                        <small class="text-muted">Items still in use</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-warning bg-opacity-15 p-3">
+                        <i class="bi bi-trash text-warning fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold fs-4 text-warning">{{ wasted_count }}</div>
+                        <small class="text-muted">Items tracked as wasted</small>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    These are estimates based on logged data.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

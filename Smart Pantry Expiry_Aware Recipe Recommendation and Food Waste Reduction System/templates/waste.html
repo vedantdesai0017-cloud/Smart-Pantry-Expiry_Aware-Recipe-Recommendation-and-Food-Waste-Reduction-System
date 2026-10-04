@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Food Waste - Smart Pantry{% endblock %}
+{% block page_title %}Food Waste Tracking{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">♻️ Waste Log</h4>
+        <p class="text-muted mb-0">Track discarded food to find patterns and reduce waste.</p>
+    </div>
+    <button class="btn btn-secondary rounded-pill shadow-sm px-4"
+            data-bs-toggle="modal" data-bs-target="#recordWasteModal">
+        <i class="bi bi-plus-lg me-1"></i>Record Waste
+    </button>
+</div>
+
+<!-- Waste Table -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Food Item</th>
+                        <th>Quantity</th>
+                        <th>Reason</th>
+                        <th>Date Recorded</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if records %}
+                        {% for record in records %}
+                        <tr>
+                            <td class="ps-4 fw-bold">
+                                <i class="bi bi-trash2 text-muted me-2"></i>{{ record.item_name }}
+                            </td>
+                            <td>{{ record.quantity }} {{ record.unit }}</td>
+                            <td>
+                                {% if record.reason == 'Expired' %}
+                                    <span class="badge bg-danger rounded-pill">
+                                        <i class="bi bi-clock me-1"></i>Expired
+                                    </span>
+                                {% elif record.reason == 'Spoiled' %}
+                                    <span class="badge bg-warning text-dark rounded-pill">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Spoiled
+                                    </span>
+                                {% elif record.reason == 'Over-purchased' %}
+                                    <span class="badge bg-info text-dark rounded-pill">
+                                        <i class="bi bi-cart-x me-1"></i>Over-purchased
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">{{ record.reason }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.waste_date.strftime('%d %b %Y') if record.waste_date else '-' }}</td>
+                            <td class="text-end pe-4">
+                                <form method="POST" action="{{ url_for('waste.delete', id=record.id) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Delete this waste record?');">
+                                    <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-recycle fs-1 mb-3 d-block opacity-50 text-success"></i>
+                                <h5>No waste records yet!</h5>
+                                <p>Great job! You haven't recorded any food waste.</p>
+                                <small class="text-muted">Use the "Record Waste" button if you discard any food.</small>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Record Waste Modal -->
+<div class="modal fade" id="recordWasteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-trash-fill text-secondary me-2"></i>Record Food Waste
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('waste.add') }}" class="needs-validation" novalidate>
+                <div class="modal-body py-3">
+                    <div class="mb-3">
+                        <label for="item_name" class="form-label fw-bold">Food Item Name</label>
+                        <input type="text" class="form-control bg-light" id="item_name" name="item_name"
+                               required placeholder="e.g. Milk, Bread, Tomatoes">
+                        <div class="invalid-feedback">Please enter item name.</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="quantity" class="form-label fw-bold">Quantity</label>
+                            <input type="number" class="form-control bg-light" id="quantity" name="quantity"
+                                   min="0.1" step="0.1" required value="1">
+                        </div>
+                        <div class="col-6">
+                            <label for="unit" class="form-label fw-bold">Unit</label>
+                            <select class="form-select bg-light" id="unit" name="unit" required>
+                                {% for u in units %}
+                                <option value="{{ u }}">{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reason" class="form-label fw-bold">Reason for Waste</label>
+                        <select class="form-select bg-light" id="reason" name="reason" required>
+                            <option value="" disabled selected>Select a reason...</option>
+                            {% for r in reasons %}
+                            <option value="{{ r }}">{{ r }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a reason.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="waste_date" class="form-label fw-bold">Date</label>
+                        <input type="date" class="form-control bg-light" id="waste_date" name="waste_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-secondary rounded-pill px-4">
+                        <i class="bi bi-save me-1"></i>Save Record
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Set today's date as default for waste_date
+        const dateInput = document.getElementById('waste_date');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            dateInput.max = today;
+        }
+
+        // Bootstrap form validation
+        document.querySelectorAll('.needs-validation').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+</script>
+{% endblock %}

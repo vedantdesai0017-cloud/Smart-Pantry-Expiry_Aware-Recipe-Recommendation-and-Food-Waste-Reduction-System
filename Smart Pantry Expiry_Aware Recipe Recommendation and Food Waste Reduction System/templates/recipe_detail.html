@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe.name }} - Smart Pantry{% endblock %}
+{% block page_title %}Recipe Details{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('recipes.list_recipes') }}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Back to Recipes
+    </a>
+</div>
+
+<!-- Recipe Header -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4 p-md-5">
+        <div class="text-center">
+            {% if recipe.dietary_type == 'Vegetarian' %}
+                <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2 mb-3 fs-6">🥗 Vegetarian</span>
+            {% elif recipe.dietary_type == 'Non-Vegetarian' %}
+                <span class="badge bg-danger bg-opacity-25 text-danger rounded-pill px-3 py-2 mb-3 fs-6">🍗 Non-Vegetarian</span>
+            {% elif recipe.dietary_type == 'Vegan' %}
+                <span class="badge bg-success rounded-pill px-3 py-2 mb-3 fs-6">🌿 Vegan</span>
+            {% endif %}
+
+            <h1 class="fw-bold text-dark display-6 mb-3">{{ recipe.name }}</h1>
+            <p class="lead text-muted mx-auto" style="max-width: 800px;">{{ recipe.description }}</p>
+
+            <div class="d-flex justify-content-center gap-4 mt-4 text-dark fw-medium">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-clock fs-3 mb-1 text-primary"></i>
+                    <span>{{ recipe.cooking_time }} mins</span>
+                    <small class="text-muted">Cook Time</small>
+                </div>
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-bar-chart fs-3 mb-1 text-info"></i>
+                    <span>{{ recipe.difficulty }}</span>
+                    <small class="text-muted">Difficulty</small>
+                </div>
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-list-check fs-3 mb-1 text-success"></i>
+                    <span>{{ recipe.ingredients|length }}</span>
+                    <small class="text-muted">Ingredients</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Ingredients Column -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h4 class="fw-bold mb-0">🛒 Ingredients</h4>
+                <p class="text-muted small mb-0 mt-1">
+                    {% set available_count = ingredient_status | selectattr('status', 'in', ['available', 'expiring']) | list | length %}
+                    {{ available_count }}/{{ ingredient_status|length }} available in your pantry
+                </p>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush mb-4">
+                    {% for ing in ingredient_status %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3
+                        {% if ing.status == 'available' %}border-start border-success border-3{% elif ing.status == 'expiring' %}border-start border-warning border-3{% else %}border-start border-danger border-3 opacity-75{% endif %} ps-3">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if ing.status == 'available' %}
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            {% elif ing.status == 'expiring' %}
+                                <i class="bi bi-exclamation-circle-fill text-warning fs-5"></i>
+                            {% else %}
+                                <i class="bi bi-x-circle-fill text-secondary fs-5"></i>
+                            {% endif %}
+
+                            <div>
+                                <h6 class="mb-0 fw-bold {% if ing.status == 'missing' %}text-muted{% endif %}">
+                                    {{ ing.ingredient_name }}
+                                </h6>
+                                <small class="text-muted">{{ ing.quantity }} {{ ing.unit }}</small>
+                                {% if ing.status == 'expiring' and ing.days_remaining is not none %}
+                                <br><small class="text-warning fw-bold">
+                                    <i class="bi bi-clock me-1"></i>
+                                    {% if ing.days_remaining == 0 %}
+                                    Expires TODAY!
+                                    {% elif ing.days_remaining < 0 %}
+                                    Already expired!
+                                    {% else %}
+                                    Expires in {{ ing.days_remaining }} day{{ 's' if ing.days_remaining != 1 }}
+                                    {% endif %}
+                                </small>
+                                {% elif ing.status == 'missing' %}
+                                <br><small class="text-danger"><i class="bi bi-bag-x me-1"></i>Not in pantry</small>
+                                {% else %}
+                                <br><small class="text-success"><i class="bi bi-check me-1"></i>In pantry</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                {% if can_cook %}
+                <div class="d-grid">
+                    <button type="button" class="btn btn-success py-3 rounded-pill fw-bold shadow-sm"
+                            data-bs-toggle="modal" data-bs-target="#cookModal">
+                        <i class="bi bi-fire me-2"></i>I Cooked This! Mark Ingredients Used
+                    </button>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary rounded-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Add the missing ingredients to your pantry, then cook this recipe!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Column -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h4 class="fw-bold mb-0">👨‍🍳 Instructions</h4>
+            </div>
+            <div class="card-body">
+                <div class="mt-2">
+                    {% if recipe.instructions %}
+                        {% set steps = recipe.instructions.split('\n') %}
+                        {% set step_num = namespace(value=0) %}
+                        {% for step in steps %}
+                            {% if step.strip() %}
+                                {% set step_num.value = step_num.value + 1 %}
+                                <div class="d-flex mb-4">
+                                    <div class="me-3 flex-shrink-0">
+                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                                             style="width:36px;height:36px;min-width:36px;">
+                                            {{ step_num.value }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0 pt-1" style="line-height:1.7;">{{ step.strip() }}</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">Instructions not available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Cook Modal -->
+{% if can_cook %}
+<div class="modal fade" id="cookModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-fire text-warning me-2"></i>Mark Ingredients as Used?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>The following pantry items will be marked as <strong>consumed</strong>:</p>
+                <ul class="list-group list-group-flush">
+                    {% for ing in ingredient_status %}
+                    {% if ing.status in ['available', 'expiring'] %}
+                    <li class="list-group-item d-flex align-items-center gap-2 px-0">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <strong>{{ ing.ingredient_name }}</strong>
+                        {% if ing.status == 'expiring' %}
+                        <span class="badge bg-warning text-dark ms-auto">Expiring!</span>
+                        {% endif %}
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    This helps you track food consumption and reduce waste. ♻️
+                </p>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('recipes.use_ingredients', id=recipe.id) }}">
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        <i class="bi bi-check2-circle me-1"></i>Yes, Update Pantry
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
